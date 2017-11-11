@@ -89,8 +89,8 @@ def hann(args):
 
 # FUNCTIONS FOR TIME-FREQUENCY REPRESENTATION
 
-def stft(data, window=sinebell(2048), hopsize=256.0, nfft=2048.0, \
-         fs=44100.0):
+def stft(data, window=sinebell(2048), hopsize=256, nfft=2048, \
+         fs=44100):
     """
     X, F, N = stft(data, window=sinebell(2048), hopsize=1024.0,
                    nfft=2048.0, fs=44100)
@@ -120,35 +120,35 @@ def stft(data, window=sinebell(2048), hopsize=256.0, nfft=2048.0, \
     
     # !!! adding zeros to the beginning of data, such that the first
     # window is centered on the first sample of data
-    data = np.concatenate((np.zeros(lengthWindow / 2.0),data))          
+    data = np.concatenate((np.zeros(lengthWindow / 2),data))          
     lengthData = data.size
     
     # adding one window for the last frame (same reason as for the
     # first frame)
-    numberFrames = np.ceil((lengthData - lengthWindow) / hopsize \
+    numberFrames = np.int((lengthData - lengthWindow) / hopsize \
                            + 1) + 1  
-    newLengthData = (numberFrames - 1) * hopsize + lengthWindow
+    newLengthData = np.int((numberFrames - 1) * hopsize + lengthWindow)
     # zero-padding data such that it holds an exact number of frames
     data = np.concatenate((data, np.zeros([newLengthData - lengthData])))
     
     # the output STFT has nfft/2+1 rows. Note that nfft has to be an
     # even number (and a power of 2 for the fft to be fast)
-    numberFrequencies = nfft / 2.0 + 1
+    numberFrequencies = np.int(nfft / 2.0 + 1)
     
     STFT = np.zeros([numberFrequencies, numberFrames], dtype=complex)
     
-    for n in np.arange(numberFrames):
-        beginFrame = n * hopsize
-        endFrame = beginFrame + lengthWindow
+    for n in np.arange(numberFrames, dtype=np.int):
+        beginFrame = np.int(n * hopsize)
+        endFrame = np.int(beginFrame + lengthWindow)
         frameToProcess = window * data[beginFrame:endFrame]
         STFT[:,n] = np.fft.rfft(frameToProcess, nfft);
         
-    F = np.arange(numberFrequencies) / nfft * fs
-    N = np.arange(numberFrames) * hopsize / fs
+    F = np.arange(numberFrequencies, dtype=np.int) / nfft * fs
+    N = np.arange(numberFrames, dtype=np.int) * hopsize / fs
     
     return STFT, F, N
 
-def istft(X, window=sinebell(2048), hopsize=256.0, nfft=2048.0):
+def istft(X, window=sinebell(2048), hopsize=256, nfft=2048):
     """
     data = istft(X, window=sinebell(2048), hopsize=256.0, nfft=2048.0)
     
@@ -173,12 +173,12 @@ def istft(X, window=sinebell(2048), hopsize=256.0, nfft=2048.0):
     """
     lengthWindow = np.array(window.size)
     numberFrequencies, numberFrames = np.array(X.shape)
-    lengthData = hopsize * (numberFrames - 1) + lengthWindow
+    lengthData = np.int(hopsize * (numberFrames - 1) + lengthWindow)
     
     data = np.zeros(lengthData)
-    for n in np.arange(numberFrames):
-        beginFrame = n * hopsize
-        endFrame = beginFrame + lengthWindow
+    for n in np.arange(numberFrames, dtype=np.int):
+        beginFrame = np.int(n * hopsize)
+        endFrame = np.int(beginFrame + lengthWindow)
         frameTMP = np.fft.irfft(X[:,n], nfft)
         frameTMP = frameTMP[:lengthWindow]
         data[beginFrame:endFrame] = data[beginFrame:endFrame] \
@@ -186,7 +186,7 @@ def istft(X, window=sinebell(2048), hopsize=256.0, nfft=2048.0):
         
     # remove the extra bit before data that was - supposedly - added
     # in the stft computation:
-    data = data[(lengthWindow / 2.0):] 
+    data = data[int(lengthWindow / 2.0):] 
     return data
 
 # DEFINING THE FUNCTIONS TO CREATE THE 'BASIS' WF0
@@ -260,15 +260,15 @@ def generate_WF0_chirped(minF0, maxF0, Fs, Nfft=2048, stepNotes=4, \
     numberElementsInWF0 = numberOfF0 * perF0
     
     # computing the desired WF0 matrix
-    WF0 = np.zeros([Nfft, numberElementsInWF0],dtype=np.double)
-    for fundamentalFrequency in np.arange(numberOfF0):
+    WF0 = np.zeros([np.int(Nfft), np.int(numberElementsInWF0)], dtype=np.double)
+    for fundamentalFrequency in np.arange(numberOfF0, dtype=np.int):
         odgd, odgdSpec = \
               generate_ODGD_spec(F0Table[fundamentalFrequency], Fs, \
                                  Ot=Ot, lengthOdgd=lengthWindow, \
                                  Nfft=Nfft, t0=0.0,\
                                  analysisWindowType=analysisWindow) # 20100924 trying with hann window
         WF0[:,fundamentalFrequency * perF0] = np.abs(odgdSpec) ** 2
-        for chirpNumber in np.arange(perF0 - 1):
+        for chirpNumber in np.arange(perF0 - 1, dtype=np.int):
             F2 = F0Table[fundamentalFrequency] \
                  * (2 ** ((chirpNumber + 1.0) * depthChirpInSemiTone \
                           / (12.0 * (perF0 - 1.0))))
@@ -311,7 +311,7 @@ def generate_ODGD_spec(F0, Fs, lengthOdgd=2048, Nfft=2048, Ot=0.5, \
             analysisWindow = hann(lengthOdgd)
     
     # maximum number of partials in the spectral comb:
-    partialMax = np.floor((Fs / 2) / F0)
+    partialMax = int(np.floor((Fs / 2) / F0))
     
     # Frequency numbers of the partials:
     frequency_numbers = np.arange(1,partialMax + 1)
@@ -408,24 +408,24 @@ def generateHannBasis(numberFrequencyBins, sizeOfFourier, Fs, \
     isScaleRecognized = False
     if frequencyScale == 'linear':
         # number of windows generated:
-        numberOfWindowsForUnit = np.ceil(1.0 / (1.0 - overlap))
+        numberOfWindowsForUnit = np.int(np.ceil(1.0 / (1.0 - overlap)))
         # recomputing the overlap to exactly fit the entire
         # number of windows:
         overlap = 1.0 - 1.0 / np.double(numberOfWindowsForUnit)
         # length of the sine window - that is also to say: bandwidth
         # of the sine window:
-        lengthSineWindow = np.ceil(numberFrequencyBins \
+        lengthSineWindow = np.int(np.ceil(numberFrequencyBins \
                                    / ((1.0 - overlap) \
                                       * (numberOfBasis - 1) + 1 \
-                                      - 2.0 * overlap))
+                                      - 2.0 * overlap)))
         # even window length, for convenience:
-        lengthSineWindow = 2.0 * np.floor(lengthSineWindow / 2.0) 
+        lengthSineWindow = np.int(2 * np.floor(lengthSineWindow / 2.0))
         
         # for later compatibility with other frequency scales:
         mappingFrequency = np.arange(numberFrequencyBins) 
         
         # size of the "big" window
-        sizeBigWindow = 2.0 * numberFrequencyBins
+        sizeBigWindow = 2 * np.int(numberFrequencyBins)
         
         # centers for each window
         ## the first window is centered at, in number of window:
@@ -455,8 +455,8 @@ def generateHannBasis(numberFrequencyBins, sizeOfFourier, Fs, \
     # adding zeroes on both sides, such that we do not need to check
     # for boundaries
     bigWindow = np.zeros([sizeBigWindow * 2, 1])
-    bigWindow[(sizeBigWindow - lengthSineWindow / 2.0):\
-              (sizeBigWindow + lengthSineWindow / 2.0)] \
+    bigWindow[(sizeBigWindow - lengthSineWindow / 2):\
+              (sizeBigWindow + lengthSineWindow / 2)] \
               = np.vstack(prototypeSineWindow)
     
     WGAMMA = np.zeros([numberFrequencyBins, numberOfBasis])
@@ -787,10 +787,10 @@ def main():
             np.maximum(\
                 np.minimum(\
                     np.outer(chirpPerF0 * indexBestPath,
-                             np.ones(chirpPerF0 \
+                             np.ones(np.int(chirpPerF0 \
                                      * (2 \
                                         * np.floor(stepNotes / scopeAllowedHF0) \
-                                        + 1))) \
+                                        + 1)))) \
                     + np.outer(np.ones(N),
                                np.arange(-chirpPerF0 \
                                          * np.floor(stepNotes / scopeAllowedHF0),
@@ -799,18 +799,18 @@ def main():
                                             + 1))),
                     chirpPerF0 * NF0 - 1),
                 0),
-            dtype=int).reshape(1, N * chirpPerF0 \
+            dtype=int).reshape(1, np.int(N * chirpPerF0 \
                                * (2 * np.floor(stepNotes / scopeAllowedHF0) \
-                                  + 1))
+                                  + 1)))
         dim2index = np.outer(np.arange(N),
-                             np.ones(chirpPerF0 \
+                             np.ones(np.int(chirpPerF0 \
                                      * (2 * np.floor(stepNotes \
-                                                     / scopeAllowedHF0) + 1), \
+                                                     / scopeAllowedHF0) + 1)), \
                                      dtype=int)\
-                             ).reshape(1, N * chirpPerF0 \
+                             ).reshape(1, np.int(N * chirpPerF0 \
                                        * (2 * np.floor(stepNotes \
                                                        / scopeAllowedHF0) \
-                                          + 1))
+                                          + 1)))
         HF00[dim1index, dim2index] = HF0[dim1index, dim2index]# HF0.max()
         
         HF00[:, indexBestPath == (NF0 - 1)] = 0.0
@@ -899,13 +899,13 @@ def main():
             np.outer(chirpPerF0 * indexBestPath,
                      np.ones(chirpPerF0 \
                              * (2 \
-                                * np.floor(stepNotes / scopeAllowedHF0) \
+                                * int(np.floor(stepNotes / scopeAllowedHF0)) \
                                 + 1))) \
             + np.outer(np.ones(N),
                        np.arange(-chirpPerF0 \
-                                 * np.floor(stepNotes / scopeAllowedHF0),
+                                 * int(np.floor(stepNotes / scopeAllowedHF0)),
                                  chirpPerF0 \
-                                 * (np.floor(stepNotes / scopeAllowedHF0) \
+                                 * int(np.floor(stepNotes / scopeAllowedHF0) \
                                     + 1))),
             chirpPerF0 * NF0 - 1),
             0),
@@ -916,14 +916,20 @@ def main():
         ##                          + 1))
         dim1index = dim1index.reshape(1,dim1index.size)
         
-        dim2index = np.outer(np.arange(N),
-                             np.ones(chirpPerF0 \
-                                     * (2 * np.floor(stepNotes \
-                                                     / scopeAllowedHF0) + 1), \
-                                     dtype=int)\
+        dim2index = np.outer(np.arange(N, dtype=np.int),
+                             np.ones(
+                                 np.int(
+                                     chirpPerF0 *
+                                     (
+                                         2 * 
+                                         int(np.floor(stepNotes / scopeAllowedHF0))
+                                         + 1
+                                     )
+                                 ),
+                             dtype=int)
                              )
-        dim2index = dim2index[indexBestPath!=0,:]
-        dim2index = dim2index.reshape(1,dim2index.size)
+        dim2index = dim2index[indexBestPath!=0, :]
+        dim2index = dim2index.reshape(1, dim2index.size)
         ## dim2index.reshape(1, N * chirpPerF0 \
         ##                                * (2 * np.floor(stepNotes \
         ##                                                / scopeAllowedHF0) \

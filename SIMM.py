@@ -165,8 +165,8 @@ def SIMM(# the data to be fitted to:
         print "Is the display interactive? ", plt.isinteractive()
 
     # renamed for convenience:
-    K = numberOfFilters
-    R = numberOfAccompanimentSpectralShapes
+    K = np.int(numberOfFilters)
+    R = np.int(numberOfAccompanimentSpectralShapes)
     omega = updateRulePower
     
     F, N = SX.shape
@@ -250,7 +250,7 @@ def SIMM(# the data to be fitted to:
 
     # Array containing the reconstruction error after the update of each 
     # of the parameter matrices:
-    recoError = np.zeros([numberOfIterations * 5 * 2 + NF0 * 2 + 1])
+    recoError = np.zeros([int(numberOfIterations) * 5 * 2 + NF0 * 2 + 1])
     recoError[0] = ISDistortion(SX, hatSX)
     if verbose:
         print "Reconstruction error at beginning: ", recoError[0]
@@ -263,7 +263,7 @@ def SIMM(# the data to be fitted to:
         os.system('mkdir %s' %dirName)
 
     # Main loop for multiplicative updating rules:
-    for n in np.arange(numberOfIterations):
+    for n in np.arange(numberOfIterations, dtype=np.int):
         # order of re-estimation: HF0, HPHI, HM, HGAMMA, WM
         if verbose:
             print "iteration ", n, " over ", numberOfIterations
@@ -530,8 +530,8 @@ def Stereo_SIMM(# the data to be fitted to:
         print "Is the display interactive? ", plt.isinteractive()
 
     # renamed for convenience:
-    K = numberOfFilters
-    R = numberOfAccompanimentSpectralShapes
+    K = np.int(numberOfFilters)
+    R = np.int(numberOfAccompanimentSpectralShapes)
     omega = updateRulePower
     
     F, N = SXR.shape
@@ -626,7 +626,7 @@ def Stereo_SIMM(# the data to be fitted to:
 
     # Array containing the reconstruction error after the update of each 
     # of the parameter matrices:
-    recoError = np.zeros([numberOfIterations * 5 * 2 + NF0 * 2 + 1])
+    recoError = np.zeros([np.int(numberOfIterations) * 5 * 2 + NF0 * 2 + 1])
     recoError[0] = ISDistortion(SXR, hatSXR) + ISDistortion(SXL, hatSXL)
     if verbose:
         print "Reconstruction error at beginning: ", recoError[0]
@@ -635,7 +635,7 @@ def Stereo_SIMM(# the data to be fitted to:
         h1 = plt.figure(1)
 
     # Main loop for multiplicative updating rules:
-    for n in np.arange(numberOfIterations):
+    for n in np.arange(numberOfIterations, dtype=np.int):
         # order of re-estimation: HF0, HPHI, HM, HGAMMA, WM
         if verbose:
             print "iteration ", n, " over ", numberOfIterations
@@ -908,7 +908,7 @@ def stereo_NMF(SXR, SXL,
         plt.ion()
         print "Is the display interactive? ", plt.isinteractive()
     
-    R = numberOfAccompanimentSpectralShapes
+    R = np.int(numberOfAccompanimentSpectralShapes)
     omega = updateRulePower
     
     F, N = SXR.shape
@@ -949,7 +949,7 @@ def stereo_NMF(SXR, SXL,
     tempNumFbyN = np.zeros([F, N])
     tempDenFbyN = np.zeros([F, N])
     
-    recoError = np.zeros([numberOfIterations * 3 + 1])
+    recoError = np.zeros([np.int(numberOfIterations) * 3 + 1])
     recoError[0] = ISDistortion(SXR, hatSXR) + ISDistortion(SXL, hatSXL)
     if verbose:
         print "Reconstruction error at beginning: ", recoError[0]
@@ -958,7 +958,7 @@ def stereo_NMF(SXR, SXL,
         h1 = plt.figure(1)
         
         
-    for n in np.arange(numberOfIterations):
+    for n in np.arange(numberOfIterations, dtype=np.int):
         # order of re-estimation: HF0, HPHI, HM, HGAMMA, WM
         if verbose:
             print "iteration ", n, " over ", numberOfIterations

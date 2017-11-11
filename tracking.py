@@ -57,22 +57,22 @@ def viterbiTracking(logDensity, logPriorDensities, logTransitionMatrix,
     cumulativeProbability = zeros([numberOfStates, numberOfFrames])
     antecedents = zeros([numberOfStates, numberOfFrames])
 
-    for state in arange(numberOfStates):
+    for state in arange(numberOfStates, dtype=int):
         antecedents[state, 0] = -1
         cumulativeProbability[state, 0] = logPriorDensities[state] \
                                           + logDensity[state, 0]
     
-    for n in arange(1, numberOfFrames):
-        if verbose:
+    for n in arange(1, numberOfFrames, dtype=int):
+        if verbose and ((n % 1000) == 1):
             print "frame number ", n, "over ", numberOfFrames
-        for state in arange(numberOfStates):
+        for state in arange(numberOfStates, dtype=int):
             if verbose:
                 print "     state number ",state, " over ", numberOfStates
             cumulativeProbability[state, n] \
                                      = cumulativeProbability[0, n - 1] \
                                        + logTransitionMatrix[0, state]
             antecedents[state, n] = 0
-            for state_ in arange(1, numberOfStates):
+            for state_ in arange(1, numberOfStates, dtype=int):
                 if verbose:
                     print "          state number ",
                     print state_, " over ", numberOfStates
@@ -139,8 +139,8 @@ def viterbiTrackingArray(logDensity, logPriorDensities, logTransitionMatrix,
     cumulativeProbability[:, 0] = logPriorDensities[:] \
                                   + logDensity[:, 0]
     
-    for n in arange(1, numberOfFrames):
-        if verbose:
+    for n in arange(1, numberOfFrames, dtype=int):
+        if verbose and ((n % 1000) == 0):
             print "frame number ", n, "over ", numberOfFrames
         # Find the state that minimizes the transition and the cumulative
         # probability. This operation can be done for all the target
@@ -157,10 +157,11 @@ def viterbiTrackingArray(logDensity, logPriorDensities, logTransitionMatrix,
                      + logDensity[:, n]
     
     # backtracking:
-    bestStatePath = zeros(numberOfFrames)
-    bestStatePath[-1]= argmax(cumulativeProbability[:, numberOfFrames \
-                                                                  - 1])
-    for n in arange(numberOfFrames - 2, -1, -1):
+    bestStatePath = zeros(numberOfFrames, dtype=int)
+    bestStatePath[-1] = argmax(
+        cumulativeProbability[:, numberOfFrames - 1]
+        )
+    for n in arange(numberOfFrames - 2, -1, -1, dtype=int):
         bestStatePath[n] = antecedents[bestStatePath[n + 1], n + 1]
         
     return bestStatePath
